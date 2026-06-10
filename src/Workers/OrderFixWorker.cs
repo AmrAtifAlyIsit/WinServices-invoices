@@ -76,6 +76,14 @@ public class OrderFixWorker : BackgroundService
 
                         double vatPercentage = item.Contains("VatPercentage") ? item["VatPercentage"].ToDouble() : 0;
 
+                        // Use Amount from the flat (top-level) order document for the Oracle transaction
+                        double orderAmount = item.Contains("Amount") ? item["Amount"].ToDouble() : 0;
+                        if (orderAmount == 0)
+                        {
+                            _logger.LogInformation("Skipping order with zero Amount for UserProfileId: {userId}", userProfileId);
+                            continue;
+                        }
+
                         // --- Prepare new fields (order-level, shared across all details) ---
                         // MADA_TRACK_ID: from Invoice.MadaInfo.TrackId
                         string? madaTrackId = null;
@@ -114,8 +122,7 @@ public class OrderFixWorker : BackgroundService
 
                             transactionInvoice.TRAINEE_CODE = profile;
 
-                            double detailAmount = detail.Contains("Amount") ? detail["Amount"].ToDouble() : 0;
-                            transactionInvoice.NETAMOUNT = Math.Round(detailAmount, 2, MidpointRounding.AwayFromZero);
+                            transactionInvoice.NETAMOUNT = Math.Round(orderAmount, 2, MidpointRounding.AwayFromZero);
 
                             double amountWithoutVat = detail.Contains("AmountWithoutVat") ? detail["AmountWithoutVat"].ToDouble() : 0;
                             transactionInvoice.TOTAL_TAXABLE_AMOUNT = Math.Round(amountWithoutVat, 2, MidpointRounding.AwayFromZero);
