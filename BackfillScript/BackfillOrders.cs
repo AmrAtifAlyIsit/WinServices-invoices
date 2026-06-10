@@ -84,6 +84,14 @@ for (var date = startRange; date <= endRange; date = date.AddDays(1))
 
         double vatPercentage = item.Contains("VatPercentage") ? item["VatPercentage"].ToDouble() : 0;
 
+        // Use Amount from the flat (top-level) order document for the Oracle transaction
+        double orderAmount = item.Contains("Amount") ? item["Amount"].ToDouble() : 0;
+        if (orderAmount == 0)
+        {
+            Console.WriteLine($"  [SKIP] Zero Amount order for UserProfileId: {userProfileId}");
+            continue;
+        }
+
         // ── MADA_TRACK_ID ──────────────────────────────────
         string? madaTrackId = null;
         if (item.Contains("Invoice") && !item["Invoice"].IsBsonNull)
@@ -116,7 +124,6 @@ for (var date = startRange; date <= endRange; date = date.AddDays(1))
             var detail = detailItem.AsBsonDocument;
 
             // ── Amounts ────────────────────────────────────
-            double detailAmount     = detail.Contains("Amount")         ? detail["Amount"].ToDouble()         : 0;
             double amountWithoutVat = detail.Contains("AmountWithoutVat") ? detail["AmountWithoutVat"].ToDouble() : 0;
 
             // ── Course info ────────────────────────────────
@@ -179,7 +186,7 @@ for (var date = startRange; date <= endRange; date = date.AddDays(1))
                 TotalTaxableAmount: Math.Round(amountWithoutVat, 2, MidpointRounding.AwayFromZero),
                 TotalVat:           Math.Round(amountWithoutVat * (vatPercentage / 100), 2, MidpointRounding.AwayFromZero),
                 InvoiceTotalAmount: Math.Round(totalInvoiceAmount, 2, MidpointRounding.AwayFromZero),
-                NetAmount:          Math.Round(detailAmount, 2, MidpointRounding.AwayFromZero),
+                NetAmount:          Math.Round(orderAmount, 2, MidpointRounding.AwayFromZero),
                 MadaTrackId:        madaTrackId,
                 DiscountCode:       discountCode,
                 DiscountPerc:       discountPerc
@@ -188,7 +195,7 @@ for (var date = startRange; date <= endRange; date = date.AddDays(1))
             if (saved)
             {
                 daySaved++;
-                Console.WriteLine($"  [OK]   {invoiceNo} | {programName} | NET: {Math.Round(detailAmount,2)} | MADA: {madaTrackId ?? "N/A"} | Coupon: {discountCode ?? "N/A"} ({discountPerc?.ToString() ?? "N/A"}%)");
+                Console.WriteLine($"  [OK]   {invoiceNo} | {programName} | NET: {Math.Round(orderAmount,2)} | MADA: {madaTrackId ?? "N/A"} | Coupon: {discountCode ?? "N/A"} ({discountPerc?.ToString() ?? "N/A"}%)");
             }
             else
             {
