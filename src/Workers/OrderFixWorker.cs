@@ -127,7 +127,8 @@ public class OrderFixWorker : BackgroundService
                             double amountWithoutVat = detail.Contains("AmountWithoutVat") ? detail["AmountWithoutVat"].ToDouble() : 0;
                             transactionInvoice.TOTAL_TAXABLE_AMOUNT = Math.Round(amountWithoutVat, 2, MidpointRounding.AwayFromZero);
                             transactionInvoice.TOTAL_VAT = Math.Round(amountWithoutVat * (vatPercentage / 100), 2, MidpointRounding.AwayFromZero);
-                            transactionInvoice.INVOICE_TOTAL_AMOUNT = Math.Round(totalInvoiceAmount, 2, MidpointRounding.AwayFromZero);
+                            //transactionInvoice.INVOICE_TOTAL_AMOUNT = Math.Round(totalInvoiceAmount, 2, MidpointRounding.AwayFromZero);
+                            transactionInvoice.INVOICE_TOTAL_AMOUNT = Math.Round(orderAmount, 2, MidpointRounding.AwayFromZero);
 
                             var productId = detail.Contains("ProductId") ? detail["ProductId"].ToString() : null;
                             var productNameFromDetail = detail.Contains("ProductName") ? detail["ProductName"].ToString() : null;
