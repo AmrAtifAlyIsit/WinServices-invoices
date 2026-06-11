@@ -272,7 +272,7 @@ foreach (var paymentNo in paymentNumbers)
                 NetAmount:          Math.Round(orderAmount, 2, MidpointRounding.AwayFromZero),
                 MadaTrackId:        madaTrackId,
                 DiscountCode:       discountCode,
-                DiscountPerc:       discountPerc
+                DiscountPerc:       $"{discountPerc}" ?? string.Empty
             );
 
             bool saved = await SaveToOracleAsync(oracleConnectionString, record);
@@ -369,7 +369,7 @@ static async Task<bool> SaveToOracleAsync(string connStr, InvoiceRecord r)
         cmd.Parameters.Add("p_NET_AMOUNT",            OracleDbType.Decimal ).Value = r.NetAmount;
         cmd.Parameters.Add("p_MADA_TRACK_ID",         OracleDbType.Varchar2).Value = r.MadaTrackId  ?? string.Empty;
         cmd.Parameters.Add("p_DISCOUNT_CODE",         OracleDbType.Varchar2).Value = r.DiscountCode ?? string.Empty;
-        cmd.Parameters.Add("p_DISCOUNT_PERC",         OracleDbType.Decimal ).Value = r.DiscountPerc ?? 0;
+        cmd.Parameters.Add("p_DISCOUNT_PERC",         OracleDbType.Varchar2).Value = r.DiscountPerc ?? string.Empty;
 
         var outputParam = new OracleParameter("p_error_msg", OracleDbType.Varchar2, 4000)
         {
@@ -431,5 +431,5 @@ record InvoiceRecord(
     double   NetAmount,
     string?  MadaTrackId,
     string?  DiscountCode,
-    double?  DiscountPerc
+    string?  DiscountPerc
 );
