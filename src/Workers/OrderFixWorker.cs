@@ -44,16 +44,16 @@ public class OrderFixWorker : BackgroundService
         {
             try
             {
-                DateTime today      = DateTime.Now.Date;
-                DateTime startDate  = processingDate;
-                DateTime endDate    = processingDate.AddDays(1);
+                DateTime today = DateTime.Now.Date;
+                DateTime startDate = processingDate;
+                DateTime endDate = processingDate.AddDays(1);
 
                 _logger.LogInformation("--- New execution cycle started at {Time} ---", DateTime.Now);
                 _logger.LogInformation("Querying orders from {StartDate} to {EndDate}", startDate, endDate);
-                
+
                 var orders = await _orderService.GetOrdersAsync(startDate, endDate, stoppingToken);
                 _logger.LogInformation("Found {OrderCount} orders to process", orders.Count);
-                
+
                 int totalSaved = 0;
 
                 foreach (var item in orders)
@@ -80,6 +80,7 @@ public class OrderFixWorker : BackgroundService
                         double orderAmount = item.Contains("Amount") ? item["Amount"].ToDouble() : 0;
                         if (orderAmount == 0)
                         {
+                            //invoice.Contains("PaymentNumber")
                             _logger.LogInformation("Skipping order with zero Amount for UserProfileId: {userId}", userProfileId);
                             continue;
                         }
@@ -108,7 +109,7 @@ public class OrderFixWorker : BackgroundService
                             ? item["CouponId"].ToString()
                             : null;
                         double? discountPerc = null;
-                        
+
                         if (!string.IsNullOrWhiteSpace(CouponId))
                         {
                             discountPerc = await _couponService.GetDiscountPercByCouponNameAsync(CouponId, stoppingToken);
@@ -173,8 +174,8 @@ public class OrderFixWorker : BackgroundService
                             // Check if this specific detail (invoice + detail ID) already exists
                             if (await _transactionService.InvoiceDetailExistsByNote(transactionInvoice.INVOICE_NO ?? string.Empty, transactionInvoice.INVOICE_NOTE ?? string.Empty, stoppingToken))
                             {
-                                _logger.LogInformation("Skipping already existing invoice detail: {inv} - Detail ID: {detailId}", 
-                                    transactionInvoice.INVOICE_NO, 
+                                _logger.LogInformation("Skipping already existing invoice detail: {inv} - Detail ID: {detailId}",
+                                    transactionInvoice.INVOICE_NO,
                                     detailId);
                                 continue;
                             }
@@ -183,10 +184,10 @@ public class OrderFixWorker : BackgroundService
                             if (saveSuccess)
                             {
                                 totalSaved++;
-                                _logger.LogInformation("Saved invoice {inv} | Program: {prog} | NET: {net} | TOTAL: {total} | MadaTrackId: {mada} | DiscountCode: {code} | DiscountPerc: {perc}", 
-                                    transactionInvoice.INVOICE_NO, 
+                                _logger.LogInformation("Saved invoice {inv} | Program: {prog} | NET: {net} | TOTAL: {total} | MadaTrackId: {mada} | DiscountCode: {code} | DiscountPerc: {perc}",
+                                    transactionInvoice.INVOICE_NO,
                                     transactionInvoice.PROGRAM_NAME,
-                                    transactionInvoice.NETAMOUNT, 
+                                    transactionInvoice.NETAMOUNT,
                                     transactionInvoice.INVOICE_TOTAL_AMOUNT,
                                     transactionInvoice.MADA_TRACK_ID ?? "N/A",
                                     transactionInvoice.DISCOUNT_CODE ?? "N/A",
@@ -194,8 +195,8 @@ public class OrderFixWorker : BackgroundService
                             }
                             else
                             {
-                                _logger.LogWarning("Failed to save invoice {inv} for trainee {trainee} - Program: {prog}", 
-                                    transactionInvoice.INVOICE_NO, 
+                                _logger.LogWarning("Failed to save invoice {inv} for trainee {trainee} - Program: {prog}",
+                                    transactionInvoice.INVOICE_NO,
                                     transactionInvoice.TRAINEE_CODE,
                                     transactionInvoice.PROGRAM_NAME);
                             }
@@ -236,7 +237,7 @@ public class OrderFixWorker : BackgroundService
             await Task.Delay(TimeSpan.FromMinutes(_options.IntervalMinutes), stoppingToken);
 
         } while (!stoppingToken.IsCancellationRequested);
-        
+
         _logger.LogInformation("OrderFixWorker STOPPED at {StopTime}", DateTime.Now);
     }
 
